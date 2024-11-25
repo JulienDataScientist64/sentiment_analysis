@@ -52,3 +52,4 @@ training.csv
 __pycache__/
 *.pkl
 .DS_Store
+config.json
