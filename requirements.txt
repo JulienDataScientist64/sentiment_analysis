@@ -1,0 +1,10 @@
+azureml-sdk
+azureml-mlflow
+azure-storage-blob
+mlflow
+pandas
+scikit-learn
+matplotlib
+seaborn
+mlflow
+
