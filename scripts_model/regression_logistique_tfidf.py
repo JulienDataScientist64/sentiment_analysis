@@ -6,8 +6,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report, accuracy_score, f1_score
-import mlflow
-import mlflow.sklearn
 
 # --------------------------------------------------
 # 1. Gestion des arguments en ligne de commande
@@ -24,10 +22,6 @@ def parse_arguments():
 # --------------------------------------------------
 def main():
     args = parse_arguments()
-
-    # Configuration MLflow
-    mlflow.set_tracking_uri(f"file:{args.output_dir}/mlruns")
-    mlflow.set_experiment("Sentiment_Analysis_Models")
 
     # Chargement des données
     print(f"Chargement des données depuis {args.data_path}...")
@@ -60,54 +54,41 @@ def main():
         LogisticRegression(random_state=42), param_grid, cv=3, scoring='f1', verbose=1, n_jobs=-1
     )
 
-    # Entraînement + MLflow tracking
-    with mlflow.start_run(run_name="TF-IDF_RegressionLogistique"):
-        mlflow.log_param("model", "Logistic Regression")
-        mlflow.log_param("vectorizer", "TF-IDF")
-        mlflow.log_param("max_features", args.max_features)
-        mlflow.sklearn.autolog()
+    # Entraînement du modèle
+    print("[INFO] Entraînement du modèle en cours...")
+    grid_search.fit(X_train_tfidf, y_train)
+    best_model = grid_search.best_estimator_
+    best_params = grid_search.best_params_
 
-        grid_search.fit(X_train_tfidf, y_train)
-        best_model = grid_search.best_estimator_
-        best_params = grid_search.best_params_
-        mlflow.log_params(best_params)
+    # Validation
+    y_val_pred = best_model.predict(X_val_tfidf)
+    val_accuracy = accuracy_score(y_val, y_val_pred)
+    val_f1 = f1_score(y_val, y_val_pred)
 
-        # Validation
-        y_val_pred = best_model.predict(X_val_tfidf)
-        val_accuracy = accuracy_score(y_val, y_val_pred)
-        val_f1 = f1_score(y_val, y_val_pred)
-        mlflow.log_metric("val_accuracy", val_accuracy)
-        mlflow.log_metric("val_f1_score", val_f1)
+    # Test
+    y_test_pred = best_model.predict(X_test_tfidf)
+    test_accuracy = accuracy_score(y_test, y_test_pred)
+    test_f1 = f1_score(y_test, y_test_pred)
 
-        # Test
-        y_test_pred = best_model.predict(X_test_tfidf)
-        test_accuracy = accuracy_score(y_test, y_test_pred)
-        test_f1 = f1_score(y_test, y_test_pred)
-        mlflow.log_metric("test_accuracy", test_accuracy)
-        mlflow.log_metric("test_f1_score", test_f1)
+    # Rapport de classification
+    report = classification_report(y_test, y_test_pred)
+    report_path = os.path.join(args.output_dir, "classification_report_LogReg.txt")
+    with open(report_path, 'w') as f:
+        f.write(report)
 
-        # Rapport de classification
-        report = classification_report(y_test, y_test_pred)
-        report_path = os.path.join(args.output_dir, "classification_report_LogReg.txt")
-        with open(report_path, 'w') as f:
-            f.write(report)
-        mlflow.log_artifact(report_path)
+    # Sauvegarde du modèle et du vectoriseur
+    model_path = os.path.join(args.output_dir, "tfidf_logistic_regression_best.pkl")
+    vect_path = os.path.join(args.output_dir, "tfidf_vectorizer.pkl")
+    joblib.dump(best_model, model_path)
+    joblib.dump(vectorizer, vect_path)
 
-        # Sauvegarde du modèle et du vectoriseur
-        model_path = os.path.join(args.output_dir, "tfidf_logistic_regression_best.pkl")
-        vect_path = os.path.join(args.output_dir, "tfidf_vectorizer.pkl")
-        joblib.dump(best_model, model_path)
-        joblib.dump(vectorizer, vect_path)
-        mlflow.log_artifact(model_path)
-        mlflow.log_artifact(vect_path)
-
-        print("\nValidation Accuracy :", val_accuracy)
-        print("Validation F1 Score :", val_f1)
-        print("\nTest Accuracy :", test_accuracy)
-        print("Test F1 Score :", test_f1)
-        print("\nClassification Report (Test):\n", report)
-
-    print(f"[INFO] Entraînement et évaluation terminés. Les logs sont disponibles dans {args.output_dir}/mlruns.")
+    # Résultats
+    print("\n[INFO] Entraînement terminé.")
+    print(f"Validation Accuracy : {val_accuracy:.4f}")
+    print(f"Validation F1 Score : {val_f1:.4f}")
+    print(f"Test Accuracy : {test_accuracy:.4f}")
+    print(f"Test F1 Score : {test_f1:.4f}")
+    print("\nClassification Report (Test):\n", report)
 
 # --------------------------------------------------
 # 3. Exécution du script
