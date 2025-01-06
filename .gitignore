@@ -1,0 +1,24 @@
+# Ignorer les fichiers CSV et volumineux
+*.csv
+*.pkl
+*.npz
+
+# Ignorer les checkpoints Jupyter Notebook
+.ipynb_checkpoints/
+
+# Ignorer les caches Python
+__pycache__/
+*.py[cod]
+
+# Ignorer les fichiers temporaires ou de sauvegarde
+*.tmp
+*.log
+*.bak
+*.swp
+~*
+
+# Ignorer les fichiers système
+.DS_Store
+
+# Ignorer le dossier data/
+data/
