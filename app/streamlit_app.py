@@ -6,46 +6,88 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 import logging
 
-# Configurer le logger pour Application Insights
+# --------------------------------------------------------------------
+# 1. Configurer le logger pour Application Insights
+# --------------------------------------------------------------------
 logger = logging.getLogger(__name__)
-logger.addHandler(AzureLogHandler(connection_string="InstrumentationKey=44a30365-a80d-4a88-9886-eb58a8c02712"))
+logger.setLevel(logging.WARNING)
+logger.addHandler(
+    AzureLogHandler(
+        connection_string="InstrumentationKey=44a30365-a80d-4a88-9886-eb58a8c02712"
+    )
+)
 
-# Charger le modèle et le tokenizer
+# --------------------------------------------------------------------
+# 2. Charger le modèle et le tokenizer
+# --------------------------------------------------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("/content/drive/MyDrive/sentiment_analysis/models/final_trained_light_LSTM.h5")
+    model = tf.keras.models.load_model(
+        "/content/drive/MyDrive/sentiment_analysis/models/final_trained_light_LSTM.h5"
+    )
     with open("/content/drive/MyDrive/sentiment_analysis/models/tokenizer.pkl", "rb") as f:
         tokenizer = pickle.load(f)
     return model, tokenizer
 
-# Charger le modèle
 model, tokenizer = load_model()
 
-# Interface utilisateur Streamlit
+# --------------------------------------------------------------------
+# 3. Interface utilisateur
+# --------------------------------------------------------------------
 st.title("Sentiment Analysis App")
 st.subheader("Entrez un texte à analyser :")
 
-user_input = st.text_area("Texte", "")
+# Champ de saisie pour le texte utilisateur
+user_text = st.text_area("Texte", key="user_text_area")
 
+# Bouton pour effectuer la prédiction
 if st.button("Prédire"):
-    if user_input:
+    if not user_text.strip():
+        st.warning("Veuillez entrer un texte avant de prédire.")
+    else:
         # Prétraitement du texte
-        seq = tokenizer.texts_to_sequences([user_input])
+        seq = tokenizer.texts_to_sequences([user_text])
         padded_seq = pad_sequences(seq, maxlen=50)
 
         # Prédiction
         prediction = model.predict(padded_seq)
-        sentiment = "Positif" if prediction[0] > 0.5 else "Négatif"
-        confidence = round(float(prediction[0][0]) * 100, 2)
+        pred_value = float(prediction[0][0])
 
-        st.write(f"**Résultat : {sentiment} ({confidence}%)**")
+        # Déterminer le sentiment et la confiance
+        sentiment = "Positif" if pred_value > 0.5 else "Négatif"
+        confidence = round(pred_value * 100, 2)
 
-        # Demander une validation
-        feedback = st.radio("La prédiction est-elle correcte ?", ("Oui", "Non"))
+        # Stocker les résultats dans st.session_state
+        st.session_state["prediction_done"] = True
+        st.session_state["sentiment_label"] = sentiment
+        st.session_state["confidence_score"] = confidence
+        st.session_state["log_sent"] = False  # Réinitialiser le statut du log
 
-        if feedback == "Non":
-            logger.warning("Prédiction incorrecte signalée.")
-            st.write("⚠️ Merci pour votre retour ! La prédiction incorrecte a été signalée.")
+        # Afficher le résultat à l'utilisateur
+        st.success(f"**Résultat : {sentiment} ({confidence}%)**")
 
-    else:
-        st.write("⚠️ Veuillez entrer un texte.")
+# Afficher les boutons de feedback après la prédiction
+if st.session_state.get("prediction_done"):
+    st.write("La prédiction est-elle correcte ?")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("OK"):
+            st.success("Merci pour votre retour. La prédiction a été validée.")
+            st.session_state["log_sent"] = True  # Empêche le bouton "Pas OK" d'envoyer un log après "OK"
+    
+    with col2:
+        if st.button("Pas OK"):
+            if not st.session_state["log_sent"]:
+                # Logger le tweet mal prédit dans Azure
+                logger.warning(
+                    f"Prédiction incorrecte signalée : "
+                    f"Texte = '{user_text}', "
+                    f"Résultat = {st.session_state['sentiment_label']}, "
+                    f"Confiance = {st.session_state['confidence_score']}%"
+                )
+                st.session_state["log_sent"] = True
+                st.error("Merci pour votre retour. La prédiction incorrecte a été signalée.")
+            else:
+                st.info("La prédiction incorrecte a déjà été signalée.")
