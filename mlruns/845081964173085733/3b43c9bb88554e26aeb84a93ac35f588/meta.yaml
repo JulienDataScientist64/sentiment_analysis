@@ -1,0 +1,15 @@
+artifact_uri: file:///content/drive/MyDrive/sentiment_analysis/mlruns/845081964173085733/3b43c9bb88554e26aeb84a93ac35f588/artifacts
+end_time: 1736185106200
+entry_point_name: ''
+experiment_id: '845081964173085733'
+lifecycle_stage: active
+run_id: 3b43c9bb88554e26aeb84a93ac35f588
+run_name: mercurial-duck-743
+run_uuid: 3b43c9bb88554e26aeb84a93ac35f588
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1736185088582
+status: 3
+tags: []
+user_id: root

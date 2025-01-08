@@ -1,0 +1,15 @@
+artifact_uri: file:///content/drive/MyDrive/sentiment_analysis/mlruns/845081964173085733/6f58c32471d2485b9d3842c74a1eafd5/artifacts
+end_time: 1736185345588
+entry_point_name: ''
+experiment_id: '845081964173085733'
+lifecycle_stage: active
+run_id: 6f58c32471d2485b9d3842c74a1eafd5
+run_name: blushing-moose-5
+run_uuid: 6f58c32471d2485b9d3842c74a1eafd5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1736185329446
+status: 3
+tags: []
+user_id: root

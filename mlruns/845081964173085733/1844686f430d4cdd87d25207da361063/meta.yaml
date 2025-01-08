@@ -1,0 +1,15 @@
+artifact_uri: file:///content/drive/MyDrive/sentiment_analysis/mlruns/845081964173085733/1844686f430d4cdd87d25207da361063/artifacts
+end_time: 1736185345588
+entry_point_name: ''
+experiment_id: '845081964173085733'
+lifecycle_stage: active
+run_id: 1844686f430d4cdd87d25207da361063
+run_name: unique-rook-691
+run_uuid: 1844686f430d4cdd87d25207da361063
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1736185329446
+status: 3
+tags: []
+user_id: root

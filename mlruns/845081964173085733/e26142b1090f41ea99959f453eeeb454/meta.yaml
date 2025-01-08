@@ -1,0 +1,15 @@
+artifact_uri: file:///content/drive/MyDrive/sentiment_analysis/mlruns/845081964173085733/e26142b1090f41ea99959f453eeeb454/artifacts
+end_time: 1736185345588
+entry_point_name: ''
+experiment_id: '845081964173085733'
+lifecycle_stage: active
+run_id: e26142b1090f41ea99959f453eeeb454
+run_name: orderly-conch-665
+run_uuid: e26142b1090f41ea99959f453eeeb454
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1736185329446
+status: 3
+tags: []
+user_id: root
