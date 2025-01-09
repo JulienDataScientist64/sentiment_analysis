@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -20,13 +21,22 @@ jobs:
 
       - name: Install Poetry
         run: |
-          curl -sSL https://install.python-poetry.org | python -
+          curl -sSL https://install.python-poetry.org | python3 -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: poetry install --no-root
+        run: poetry install
 
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
+
+      - name: Build Docker image
+        run: docker build -t sentiment-api .
+
+      - name: Test Docker container
+        run: |
+          docker run -d -p 8000:8000 sentiment-api
+          sleep 5
+          curl -f http://localhost:8000/docs || exit 1
