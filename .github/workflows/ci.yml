@@ -21,10 +21,12 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python -
-          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+          echo "::add-path::${HOME}/.local/bin"
 
       - name: Install dependencies
-        run: poetry install --no-root
+        run: poetry install
 
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
