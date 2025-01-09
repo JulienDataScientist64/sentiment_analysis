@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Sentiment analysis project"
 authors = ["JulienDataScientist64"]
 
-packages = [{ include = "app" }]  
+# Ajout des packages à inclure
+packages = [
+    { include = "app" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
