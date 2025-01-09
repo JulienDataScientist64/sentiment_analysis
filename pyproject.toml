@@ -1,29 +1,28 @@
 [tool.poetry]
 name = "sentiment-analysis"
 version = "0.1.0"
-description = ""
-authors = ["Julien Cantalapiedra <jcantalapiedra1@gmail.com>"]
-readme = "README.md"
-package-mode = false
+description = "Sentiment analysis project"
+authors = ["JulienDataScientist64"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-gensim = "4.3.3"
-joblib = "1.4.2"
-mlflow = "2.19.0"
-numpy = "1.26.4"
-pandas = "2.2.2"
-protobuf = "4.25.5"
-scikit-learn = "1.6.0"
+python = ">=3.10,<3.12"
+fastapi = "0.100.0"
+httpx = "^0.24.0"
 tensorflow = "2.17.1"
+tensorflow-io-gcs-filesystem = "0.31.0"
+scikit-learn = "1.6.0"
+numpy = ">=1.19.5,<1.24.0"
+pandas = "2.2.2"
+gensim = "4.3.3"
 transformers = "4.47.1"
-opencensus = "*"
-opencensus-ext-azure = "*"
-pyngrok = "5.2.1"
-
-
-
+pytest = "8.3.4"
+mlflow = "2.19.0"
+joblib = "1.4.2"
+seaborn = "0.13.2"
+azureml-core = "1.57.0"
+azureml-dataprep = "4.1.0"
+azure-identity = "1.7.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

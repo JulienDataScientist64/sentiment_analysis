@@ -1,23 +1,41 @@
-from fastapi import FastAPI, Body
-import tensorflow as tf
+from fastapi import FastAPI, Body, HTTPException
+from tensorflow import keras
+import pickle
 import numpy as np
 
-# Initialisation de FastAPI
 app = FastAPI()
 
-# Charger le modèle avec TensorFlow
-model = tf.keras.models.load_model("models/final_trained_light_LSTM.h5")
+# Charger le modèle TensorFlow
+MODEL_PATH = "models/lstm.h5"
+TOKENIZER_PATH = "models/tokenizer.pkl"
 
+# Gestion des erreurs de chargement du modèle et du tokenizer
+try:
+    model = keras.models.load_model(MODEL_PATH)
+except Exception as e:
+    raise RuntimeError(f"Erreur lors du chargement du modèle : {e}")
 
-# Endpoint racine
+try:
+    with open(TOKENIZER_PATH, "rb") as f:
+        tokenizer = pickle.load(f)
+except Exception as e:
+    raise RuntimeError(f"Erreur lors du chargement du tokenizer : {e}")
+
 @app.get("/")
 def root():
     return {"message": "API is running"}
 
-
-# Endpoint pour la prédiction
 @app.post("/predict")
-def predict(data: list = Body(...)):
-    arr = np.array(data)
-    preds = model.predict(arr).tolist()
-    return {"predictions": preds}
+def predict(texts: list = Body(...)):
+    try:
+        # Prétraitement des séquences
+        sequences = tokenizer.texts_to_sequences(texts)
+        padded_sequences = keras.preprocessing.sequence.pad_sequences(
+            sequences, maxlen=50
+        )  # Assure-toi que `maxlen` correspond à ton modèle
+
+        # Prédiction
+        predictions = model.predict(padded_sequences)
+        return {"predictions": predictions.tolist()}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erreur lors de la prédiction : {e}")
