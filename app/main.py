@@ -2,6 +2,12 @@ from fastapi import FastAPI, Body, HTTPException
 from tensorflow import keras
 import pickle
 import numpy as np
+from pydantic import BaseModel
+from typing import List
+
+# Définir un schéma Pydantic pour valider la requête
+class TextsInput(BaseModel):
+    texts: List[str]
 
 app = FastAPI()
 
@@ -26,8 +32,11 @@ def root():
     return {"message": "API is running"}
 
 @app.post("/predict")
-def predict(texts: list = Body(...)):
+def predict(texts_input: TextsInput):
     try:
+        # Récupérer les textes à partir de la requête
+        texts = texts_input.texts
+
         # Prétraitement des séquences
         sequences = tokenizer.texts_to_sequences(texts)
         padded_sequences = keras.preprocessing.sequence.pad_sequences(
