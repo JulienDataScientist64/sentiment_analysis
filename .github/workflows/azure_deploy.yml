@@ -1,4 +1,4 @@
-name: CI Dev
+name: CI/CD Deployment to Azure App Service
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
 
     steps:
       # Étape 1 : Récupérer le code source
-      - name: Checkout code
+      - name: Checkout the code
         uses: actions/checkout@v3
 
       # Étape 2 : Configurer Python
@@ -37,39 +37,19 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Azure CLI
-      - name: Log in to Azure CLI
+      # Étape 6 : Se connecter à Azure avec le profil de publication
+      - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Étape 7 : Construire l'image Docker
       - name: Build Docker image
-        run: docker build -t ${{ secrets.AZURE_APP_NAME }} .
+        run: docker build -t ${{ env.AZURE_APP_NAME }} .
 
-      # Étape 8 : Pousser l'image Docker sur Docker Hub
-      - name: Push Docker image to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.AZURE_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
-        run: |
-          echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
-          docker tag ${{ secrets.AZURE_APP_NAME }} $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
-          docker push $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
-
-      # Étape 9 : Déployer l'image Docker sur Azure App Service
+      # Étape 8 : Déployer l'application sur Azure App Service
       - name: Deploy to Azure App Service
-        run: |
-          az webapp config container set \
-            --name ${{ secrets.AZURE_APP_NAME }} \
-            --resource-group sentiment-analysis-rg \
-            --container-image-name $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
-
-      # Étape 10 : Déconnexion de Docker et Azure CLI
-      - name: Logout from Docker and Azure CLI
-        run: |
-          docker logout
-          az logout
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_APP_NAME }}
+          images: ${{ env.AZURE_APP_NAME }}
