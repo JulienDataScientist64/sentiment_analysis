@@ -30,3 +30,20 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
+
+      # Étape de déploiement sur Azure
+      - name: Deploy to Azure App Service
+        env:
+          AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
+        run: |
+          # Construire l'image Docker
+          docker build -t $AZURE_APP_NAME .
+
+          # Se connecter à Azure Container Registry
+          echo $AZURE_PASSWORD | docker login $AZURE_USERNAME --username $AZURE_USERNAME --password-stdin
+
+          # Pousser l'image Docker
+          docker tag $AZURE_APP_NAME $AZURE_USERNAME/$AZURE_APP_NAME:latest
+          docker push $AZURE_USERNAME/$AZURE_APP_NAME:latest
