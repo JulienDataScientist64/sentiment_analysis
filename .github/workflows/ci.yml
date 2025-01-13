@@ -7,7 +7,7 @@ on:
     branches: [ dev ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,22 +36,32 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Docker Hub
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.AZURE_PASSWORD }}" | docker login -u "${{ secrets.AZURE_USERNAME }}" --password-stdin
+      # Étape 6 : Se connecter à Azure CLI
+      - name: Log in to Azure CLI
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       # Étape 7 : Construire l'image Docker
       - name: Build Docker image
-        run: docker build -t ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }} .
+        run: docker build -t ${{ secrets.AZURE_APP_NAME }} .
 
-      # Étape 8 : Pousser l'image Docker sur Docker Hub
-      - name: Push Docker image
-        run: docker push ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }}:latest
+      # Étape 8 : Pousser l'image Docker sur le registre Docker Hub
+      - name: Push Docker image to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.AZURE_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
+        run: |
+          echo $DOCKER_PASSWORD | docker login --username $DOCKER_USERNAME --password-stdin
+          docker tag ${{ secrets.AZURE_APP_NAME }} $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
+          docker push $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
 
-      # Étape 9 : Déployer sur Azure
-      - name: Deploy to Azure
+      # Étape 9 : Déployer l'image Docker sur Azure App Service
+      - name: Deploy to Azure App Service
         run: |
           az webapp config container set \
             --name ${{ secrets.AZURE_APP_NAME }} \
             --resource-group sentiment-analysis-rg \
-            --docker-custom-image-name ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }}:latest
+            --container-image-name $DOCKER_USERNAME/${{ secrets.AZURE_APP_NAME }}:latest
