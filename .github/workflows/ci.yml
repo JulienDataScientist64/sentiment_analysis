@@ -11,27 +11,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape 1 : Récupérer le code source
       - uses: actions/checkout@v3
 
+      # Étape 2 : Configurer Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
+      # Étape 3 : Installer Poetry
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
+      # Étape 4 : Installer les dépendances avec Poetry
       - name: Install dependencies
         run: poetry install --no-root
 
+      # Étape 5 : Lancer les tests
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape de déploiement sur Azure
+      # Étape 6 : Étape de debug des variables d'environnement
+      - name: Debug Secrets
+        run: |
+          echo "App Name: $AZURE_APP_NAME"
+          echo "Azure Username: $AZURE_USERNAME"
+        env:
+          AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+
+      # Étape 7 : Construire et déployer l'image Docker sur Azure App Service
       - name: Deploy to Azure App Service
         env:
           AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
@@ -39,11 +53,21 @@ jobs:
           AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
         run: |
           # Construire l'image Docker
+          echo "Building Docker image..."
           docker build -t $AZURE_APP_NAME .
 
-          # Se connecter à Azure Container Registry
-          echo $AZURE_PASSWORD | docker login $AZURE_USERNAME --username $AZURE_USERNAME --password-stdin
+          # Se connecter au Docker Registry
+          echo "Logging into Docker Registry..."
+          echo $AZURE_PASSWORD | docker login https://index.docker.io/v1/ --username $AZURE_USERNAME --password-stdin
 
-          # Pousser l'image Docker
+          # Taguer et pousser l'image Docker
+          echo "Tagging and pushing Docker image..."
           docker tag $AZURE_APP_NAME $AZURE_USERNAME/$AZURE_APP_NAME:latest
           docker push $AZURE_USERNAME/$AZURE_APP_NAME:latest
+
+          # Déployer l'image sur Azure App Service
+          echo "Deploying to Azure App Service..."
+          az webapp config container set \
+            --name $AZURE_APP_NAME \
+            --resource-group sentiment-analysis-rg \
+            --docker-custom-image-name $AZURE_USERNAME/$AZURE_APP_NAME:latest
