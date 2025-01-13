@@ -13,7 +13,7 @@ def test_root():
 # Test de la route /predict avec un exemple de tweet
 def test_predict():
     # Envoie une liste de textes directement, comme attendu par la route
-    payload = ["I love this product! It's amazing!"]
+    payload = {"texts": ["I love this product! It's amazing!"]}
     response = client.post("/predict", json=payload)
     assert response.status_code == 200
     assert "predictions" in response.json()
