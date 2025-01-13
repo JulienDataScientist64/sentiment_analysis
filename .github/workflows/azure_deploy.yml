@@ -1,10 +1,17 @@
-name: CI/CD Deployment to Azure App Service
+name: CI Dev
 
 on:
   push:
     branches: [ dev ]
   pull_request:
     branches: [ dev ]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_WEBAPP_NAME: sentiment-streamlit-app
 
 jobs:
   build-and-deploy:
@@ -27,7 +34,7 @@ jobs:
           curl -sSL https://install.python-poetry.org | python -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
-      # Étape 4 : Installer les dépendances avec Poetry
+      # Étape 4 : Installer les dépendances
       - name: Install dependencies
         run: poetry install --no-root
 
@@ -37,19 +44,21 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Azure avec le profil de publication
-      - name: Login to Azure
+      # Étape 6 : Se connecter à Azure
+      - name: Log in to Azure
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       # Étape 7 : Construire l'image Docker
       - name: Build Docker image
-        run: docker build -t ${{ env.AZURE_APP_NAME }} .
+        run: docker build -t ${{ env.AZURE_WEBAPP_NAME }} .
 
-      # Étape 8 : Déployer l'application sur Azure App Service
+      # Étape 8 : Déployer sur Azure App Service
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_APP_NAME }}
-          images: ${{ env.AZURE_APP_NAME }}
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          images: ${{ env.AZURE_WEBAPP_NAME }}
