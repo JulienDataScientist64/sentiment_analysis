@@ -1,4 +1,4 @@
-name: CI Dev
+name: CI/CD Dev
 
 on:
   push:
@@ -7,12 +7,13 @@ on:
     branches: [ dev ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       # Étape 1 : Récupérer le code source
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       # Étape 2 : Configurer Python
       - name: Set up Python
@@ -46,7 +47,7 @@ jobs:
           AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
 
       # Étape 7 : Construire et déployer l'image Docker sur Azure App Service
-      - name: Deploy to Azure App Service
+      - name: Build and Deploy Docker Image
         env:
           AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
           AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
@@ -71,3 +72,12 @@ jobs:
             --name $AZURE_APP_NAME \
             --resource-group sentiment-analysis-rg \
             --docker-custom-image-name $AZURE_USERNAME/$AZURE_APP_NAME:latest
+
+      # Étape 8 : Redémarrer l'application pour appliquer les modifications
+      - name: Restart Azure App Service
+        env:
+          AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
+        run: |
+          az webapp restart \
+            --name $AZURE_APP_NAME \
+            --resource-group sentiment-analysis-rg
