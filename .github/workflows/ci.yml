@@ -38,16 +38,18 @@ jobs:
 
       # Étape 6 : Se connecter à Docker Hub
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.AZURE_PASSWORD }}" | docker login --username ${{ secrets.AZURE_USERNAME }} --password-stdin
+        run: echo "${{ secrets.AZURE_PASSWORD }}" | docker login -u "${{ secrets.AZURE_USERNAME }}" --password-stdin
 
-      # Étape 7 : Construire et pousser l'image Docker
-      - name: Build and push Docker image
-        run: |
-          docker build -t ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }}:latest .
-          docker push ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }}:latest
+      # Étape 7 : Construire l'image Docker
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }} .
 
-      # Étape 8 : Déployer l'image sur Azure App Service
-      - name: Deploy to Azure App Service
+      # Étape 8 : Pousser l'image Docker sur Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.AZURE_USERNAME }}/${{ secrets.AZURE_APP_NAME }}:latest
+
+      # Étape 9 : Déployer sur Azure
+      - name: Deploy to Azure
         run: |
           az webapp config container set \
             --name ${{ secrets.AZURE_APP_NAME }} \
