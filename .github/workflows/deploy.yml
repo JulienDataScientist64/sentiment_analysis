@@ -2,9 +2,9 @@ name: CI/CD Azure Deployment
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ api-only ]
   pull_request:
-    branches: [ dev ]
+    branches: [  api-only ]
 
 permissions:
   id-token: write
