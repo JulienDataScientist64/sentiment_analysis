@@ -34,6 +34,10 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-root
 
+      # Étape 5 : Installer les dépendances manquantes via pip
+      - name: Ensure dependencies are installed
+        run: poetry run pip install -r requirements.txt
+
       # Vérifier que le fichier main.py existe dans le dossier app
       - name: Check for main.py
         run: |
@@ -42,13 +46,13 @@ jobs:
             exit 1
           fi
 
-      # Étape 5 : Lancer les tests avec pytest
+      # Étape 6 : Lancer les tests avec pytest
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Azure avec OIDC
+      # Étape 7 : Se connecter à Azure avec OIDC
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -56,11 +60,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Créer le fichier startup.txt
+      # Étape 8 : Créer le fichier startup.txt
       - name: Create startup command
         run: echo "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000" > startup.txt
 
-      # Étape 8 : Déployer sur Azure Web App
+      # Étape 9 : Déployer sur Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
