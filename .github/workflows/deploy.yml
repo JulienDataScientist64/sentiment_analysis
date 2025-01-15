@@ -1,4 +1,4 @@
-name: CI/CD Azure Deployment - API Only
+name: CI/CD API Only
 
 on:
   push:
@@ -15,29 +15,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Étape 1 : Récupérer le code source
       - uses: actions/checkout@v3
+
+      # Étape 2 : Configurer Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
+      # Étape 3 : Installer Poetry
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
+      # Étape 4 : Installer les dépendances avec Poetry
       - name: Install dependencies
         run: poetry install --no-root
+
+      # Étape 5 : Lancer les tests avec pytest
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
+
+      # Étape 6 : Se connecter à Azure avec OIDC
       - name: Azure login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Étape 7 : Déployer sur Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_APP_NAME }}
+          app-name: sentiment-api-only
           slot-name: production
