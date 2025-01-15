@@ -1,4 +1,4 @@
-name: CI/CD API Only
+name: CI/CD sentiment-api-only
 
 on:
   push:
