@@ -1,10 +1,10 @@
-name: CI/CD sentiment-api-only
+name: CI/CD Azure Deployment
 
 on:
   push:
-    branches: [api-only]
+    branches: [ api-only ]
   pull_request:
-    branches: [api-only]
+    branches: [ api-only ]
 
 permissions:
   id-token: write
@@ -28,24 +28,17 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
       # Étape 4 : Installer les dépendances avec Poetry
       - name: Install dependencies
-        run: |
-          poetry install --no-root
+        run: poetry install --no-root
 
-      # Vérifier que le fichier main.py existe
-      - name: Check for main.py
-        run: |
-          if [ ! -f "app/main.py" ]; then
-            echo "main.py not found!"
-            exit 1
-          fi
-
-      # Étape 5 : Créer le fichier startup.txt pour Azure
-      - name: Create startup command
-        run: echo "poetry run python -m uvicorn app.main:app --host 0.0.0.0 --port 8000" > startup.txt
+      # Étape 5 : Lancer les tests avec pytest
+      - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: poetry run pytest
 
       # Étape 6 : Se connecter à Azure avec OIDC
       - name: Azure login
@@ -55,10 +48,14 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Déployer sur Azure Web App
+      # Étape 7 : Créer le fichier startup.txt avec la commande de démarrage
+      - name: Create startup command
+        run: echo "poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000" > startup.txt
+
+      # Étape 8 : Déployer sur Azure App Service
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: sentiment-api-only
+          app-name: ${{ secrets.AZURE_APP_NAME }}
           slot-name: production
-          startup-command: 'poetry run python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'
+          startup-command: 'poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000'
