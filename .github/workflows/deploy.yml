@@ -1,4 +1,4 @@
-name: CI/CD api-only
+name: CI/CD Azure Deployment
 
 on:
   push:
