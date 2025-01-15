@@ -3,8 +3,6 @@ name: CI/CD Azure Deployment
 on:
   push:
     branches: [ api-only ]
-  pull_request:
-    branches: [ api-only ]
 
 permissions:
   id-token: write
@@ -28,7 +26,7 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       # Étape 4 : Installer les dépendances avec Poetry
       - name: Install dependencies
@@ -36,11 +34,9 @@ jobs:
 
       # Étape 5 : Lancer les tests avec pytest
       - name: Run tests
-        env:
-          PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Azure avec OIDC
+      # Étape 6 : Se connecter à Azure
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -48,11 +44,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Déployer sur Azure App Service
+      # Étape 7 : Déployer sur Azure
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_APP_NAME }}
           slot-name: production
-          package: "."
-          enable-downtime: true
+          startup-command: 'poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000'
