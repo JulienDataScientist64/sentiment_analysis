@@ -48,7 +48,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Déployer sur Azure App Service
+      # Étape 7 : Déployer uniquement FastAPI sur Azure App Service
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
