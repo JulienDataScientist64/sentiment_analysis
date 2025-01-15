@@ -48,14 +48,11 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Créer le fichier startup.txt avec la commande de démarrage
-      - name: Create startup command
-        run: echo "poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000" > startup.txt
-
-      # Étape 8 : Déployer sur Azure App Service
+      # Étape 7 : Déployer sur Azure App Service
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_APP_NAME }}
           slot-name: production
-          startup-command: 'poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000'
+          package: "."
+          enable-downtime: true
