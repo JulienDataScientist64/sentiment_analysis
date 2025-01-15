@@ -34,10 +34,10 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-root
 
-      # Vérifier que le fichier main.py existe
+      # Vérifier que le fichier main.py existe dans le dossier app
       - name: Check for main.py
         run: |
-          if [ ! -f "main.py" ]; then
+          if [ ! -f "app/main.py" ]; then
             echo "main.py not found!"
             exit 1
           fi
@@ -58,7 +58,7 @@ jobs:
 
       # Étape 7 : Créer le fichier startup.txt
       - name: Create startup command
-        run: echo "python -m uvicorn main:app --host 0.0.0.0 --port 8000" > startup.txt
+        run: echo "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000" > startup.txt
 
       # Étape 8 : Déployer sur Azure Web App
       - name: Deploy to Azure Web App
@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: sentiment-api-only
           slot-name: production
-          startup-command: 'python -m uvicorn main:app --host 0.0.0.0 --port 8000'
+          startup-command: 'python -m uvicorn app.main:app --host 0.0.0.0 --port 8000'
