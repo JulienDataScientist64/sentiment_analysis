@@ -34,6 +34,14 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-root
 
+      # Vérifier que le fichier main.py existe
+      - name: Check for main.py
+        run: |
+          if [ ! -f "main.py" ]; then
+            echo "main.py not found!"
+            exit 1
+          fi
+
       # Étape 5 : Lancer les tests avec pytest
       - name: Run tests
         env:
@@ -58,4 +66,4 @@ jobs:
         with:
           app-name: sentiment-api-only
           slot-name: production
-          startup-command: startup.txt
+          startup-command: 'python -m uvicorn main:app --host 0.0.0.0 --port 8000'
