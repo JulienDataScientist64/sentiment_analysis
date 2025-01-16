@@ -40,7 +40,21 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: poetry run pytest
 
-      # Étape 6 : Se connecter à Azure avec OIDC
+      # Étape 6 : Construire l'image Docker
+      - name: Build Docker image
+        run: |
+          docker build -t juliendatascientist64/sentiment-analysis:latest .
+
+      # Étape 7 : Pousser l'image vers Docker Hub
+      - name: Push Docker image to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+          docker push juliendatascientist64/sentiment-analysis:latest
+
+      # Étape 8 : Se connecter à Azure avec OIDC
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -48,9 +62,10 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Étape 7 : Déployer sur Azure App Service
+      # Étape 9 : Déployer l'image sur Azure App Service
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_APP_NAME }}
+          app-name: sentiment-app
+          images: juliendatascientist64/sentiment-analysis:latest
           slot-name: production
